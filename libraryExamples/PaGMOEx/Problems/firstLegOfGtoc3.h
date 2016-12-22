@@ -8,8 +8,8 @@
  *    http://tudat.tudelft.nl/LICENSE.
  */
 
-#ifndef TUDAT_EXAMPLE_PAGMO_PROBLEM_EARTH_MARS_TRANSFER_H
-#define TUDAT_EXAMPLE_PAGMO_PROBLEM_EARTH_MARS_TRANSFER_H
+#ifndef FIRSTLEGOFGTOC3_H
+#define FIRSTLEGOFGTOC3_H
 
 #include <vector>
 
@@ -32,10 +32,10 @@ namespace problem
 typedef Eigen::Matrix< double, 6, 1 > StateType;
 
 //! Test function for a new interplanetary trajectory class in Tudat
-class __PAGMO_VISIBLE EarthMarsTransfer : public base
+class __PAGMO_VISIBLE FirstLegOfGtoc3 : public base
 {
   public:
-    EarthMarsTransfer( const std::vector< std::vector< double > > problemBounds );
+    FirstLegOfGtoc3( const std::vector< std::vector< double > > problemBounds );
     base_ptr clone( ) const;
     std::string get_name( ) const;
     const std::vector< std::vector< double > > problemBounds_;
@@ -78,7 +78,7 @@ namespace serialization
 {
 
 template<class Ar>
-inline void save_construct_data( Ar &ar, const pagmo::problem::EarthMarsTransfer * t,
+inline void save_construct_data( Ar &ar, const pagmo::problem::FirstLegOfGtoc3 * t,
     const unsigned int file_version ){
 
     // save data required to construct instance
@@ -86,14 +86,14 @@ inline void save_construct_data( Ar &ar, const pagmo::problem::EarthMarsTransfer
 }
 
 template<class Ar>
-inline void load_construct_data( Ar &ar, pagmo::problem::EarthMarsTransfer * t,
+inline void load_construct_data( Ar &ar, pagmo::problem::FirstLegOfGtoc3 * t,
     const unsigned int file_version ){
 
     // retrieve data from archive required to construct new instance
     std::vector< std::vector< double > > problemBounds;
     ar >> problemBounds;
     // invoke inplace constructor to initialize instance of my_class
-    ::new( t )pagmo::problem::EarthMarsTransfer( problemBounds );
+    ::new( t )pagmo::problem::FirstLegOfGtoc3( problemBounds );
 }
 
 } // namespace serialization;
@@ -102,6 +102,6 @@ inline void load_construct_data( Ar &ar, pagmo::problem::EarthMarsTransfer * t,
 
 
 
-BOOST_CLASS_EXPORT_KEY( pagmo::problem::EarthMarsTransfer );
+BOOST_CLASS_EXPORT_KEY( pagmo::problem::FirstLegOfGtoc3 );
 
 #endif // TUDAT_EXAMPLE_PAGMO_PROBLEM_EARTH_MARS_TRANSFER_H

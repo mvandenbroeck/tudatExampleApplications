@@ -13,38 +13,42 @@
 #include <Tudat/Astrodynamics/BasicAstrodynamics/orbitalElementConversions.h>
 #include <Tudat/Astrodynamics/BasicAstrodynamics/convertMeanToEccentricAnomalies.h>
 #include <Tudat/Astrodynamics/MissionSegments/multiRevolutionLambertTargeterIzzo.h>
+#include <Tudat/Astrodynamics/BasicAstrodynamics/unitConversions.h>
 
-#include "PaGMOEx/Problems/earthMarsTransfer.h"
+#include <Thesis/constants.h>
+#include <Thesis/taylorSeriesIntegrator.h>
+
+#include "PaGMOEx/Problems/firstLegOfGtoc3.h"
 
 namespace pagmo { namespace problem {
 
-EarthMarsTransfer::EarthMarsTransfer(
+FirstLegOfGtoc3::FirstLegOfGtoc3(
     const std::vector< std::vector< double > > problemBounds ) :
     base( problemBounds[ 0 ], problemBounds[ 1 ], 0, 1 ),
     problemBounds_( problemBounds )
 { }
 
 //! Clone method.
-base_ptr EarthMarsTransfer::clone( ) const {
-        return base_ptr( new EarthMarsTransfer( *this ) );
+base_ptr FirstLegOfGtoc3::clone( ) const {
+        return base_ptr( new FirstLegOfGtoc3( *this ) );
 }
 
 //! Descriptive name of the problem
-std::string EarthMarsTransfer::get_name() const {
-    return "Multi-revolution Lambert Earth-Mars transfer trajectory";
+std::string FirstLegOfGtoc3::get_name() const {
+    return "First leg (Earth - Asteroid 49) of GTOC3 problem";
 }
 
 //! Implementation of the objective function.
-void EarthMarsTransfer::objfun_impl( fitness_vector &f, const decision_vector &xv ) const{
-    using tudat::mission_segments::MultiRevolutionLambertTargeterIzzo;
+void FirstLegOfGtoc3::objfun_impl( fitness_vector &f, const decision_vector &xv ) const{
+    using taylorSeriesIntegration ;
 
     // Gravitational parameter of the Sun
     double mu = 1.32712440018e+20;
 
     // Set initial and final position as those of Earth and Mars at
     // departure and arrival respectively.
-    StateType initialState = getPlanetPosition( xv[0], "Earth");
-    StateType finalState   = getPlanetPosition( xv[0] + xv[1], "Mars" );
+    StateType initialState = getPlanetPosition( xv[0], "Earth" );
+    StateType finalState   = getPlanetPosition( xv[0] + xv[1], "Asteroid 49" );
 
     MultiRevolutionLambertTargeterIzzo lambertTargeter( initialState.segment(0,3),
 	finalState.segment(0,3), xv[1]*86400, mu );
@@ -53,37 +57,56 @@ void EarthMarsTransfer::objfun_impl( fitness_vector &f, const decision_vector &x
 
     // Go through all multi-revolution solutions and select the one
     // with the lowest delta-V
-    for( unsigned int i = 0; i <= maxrev; ++i){
-	lambertTargeter.computeForRevolutionsAndBranch( i, false );
-	deltaV = std::min( deltaV, ( initialState.segment(3,3)
-		- lambertTargeter.getInertialVelocityAtDeparture( )).norm() +
-	    + ( finalState.segment(3,3)
-		- lambertTargeter.getInertialVelocityAtArrival( )).norm());
+    for( unsigned int i = 0; i <= maxrev; ++i)
+    {
+        lambertTargeter.computeForRevolutionsAndBranch( i, false );
+        deltaV = std::min( deltaV, ( initialState.segment(3,3)
+            - lambertTargeter.getInertialVelocityAtDeparture( )).norm() +
+            + ( finalState.segment(3,3)
+            - lambertTargeter.getInertialVelocityAtArrival( )).norm());
     }
     f[0] = deltaV;
 }
 
-//! Function to obtain position of Earth and Mars
-StateType EarthMarsTransfer::getPlanetPosition( const double date,
+//! Function to obtain position of Earth and Asteroid
+StateType FirstLegOfGtoc3::getPlanetPosition( const double date,
                                                 const std::string planetName ) const {
     using tudat::orbital_element_conversions::convertKeplerianToCartesianElements;
     using tudat::orbital_element_conversions::convertMeanAnomalyToEccentricAnomaly;
     using tudat::orbital_element_conversions::convertEccentricAnomalyToTrueAnomaly;
 
+    using namespace tudat;
+    using namespace unit_conversions;
+
+    // Create constants object
+    ConstantsPointer constantsPointer;
 
     // Gravitational parameter of the Sun
-    double mu = 1.32712440018e+20;
+    double mu = 1.32712440018e20;
 
     StateType stateKepl, stateCart;
     double n, jd0;
-    if( planetName == "Earth" ){
-        n   = 1.991e-07;
-        jd0 = 2454000.5;
-        stateKepl << 1.4960e+11, 1.6717e-02, 0.0, 5.0198e+00, 3.0614e+00, 4.4961e+00;
-    } else {
-        n   = 1.0586e-07;
-        jd0 = 2451545.0;
-        stateKepl << 2.2794e+11, 9.3412e-02, 0.0, 5.8650e+00, 8.6531e-01, 5.7567e+00;
+    if( planetName == "Earth" )
+    {
+        jd0 = 54000;
+        stateKepl << 0.999988049532578 * constantsPointer->astronomicalUnit_,
+                1.671681163160e-2,
+                tudat::unit_conversions::convertDegreesToRadians( 0.8854353079654e-3 ),
+                tudat::unit_conversions::convertDegreesToRadians( 287.61577546182 ),
+                tudat::unit_conversions::convertDegreesToRadians( 175.40647696473 ),
+                tudat::unit_conversions::convertDegreesToRadians( 257.606837075163 );
+        n   = std::sqrt( mu / std::pow( stateKepl( 1 ), 3 ) ); // mean motion
+    }
+    else
+    {
+        jd0 = 54200;
+        stateKepl << 0.9774002 * constantsPointer->astronomicalUnit_,
+                0.06697124,
+                tudat::unit_conversions::convertDegreesToRadians( 0.11024 ),
+                tudat::unit_conversions::convertDegreesToRadians( 274.92230 ),
+                tudat::unit_conversions::convertDegreesToRadians( 192.31139 ),
+                tudat::unit_conversions::convertDegreesToRadians( 180.331421177838 );
+        n   = std::sqrt( mu / std::pow( stateKepl( 1 ), 3 ) ); // mean motion
     }
     stateKepl( 5 ) = convertMeanAnomalyToEccentricAnomaly( stateKepl( 1 ),
         fmod( stateKepl( 5 ) + ( date - jd0 ) * 86400. * n, 2.*M_PI ) );
@@ -94,4 +117,4 @@ StateType EarthMarsTransfer::getPlanetPosition( const double date,
 
 }} // namespace problem; namespace pagmo
 
-BOOST_CLASS_EXPORT_IMPLEMENT( pagmo::problem::EarthMarsTransfer );
+BOOST_CLASS_EXPORT_IMPLEMENT( pagmo::problem::FirstLegOfGtoc3 );

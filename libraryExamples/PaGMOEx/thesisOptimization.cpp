@@ -45,8 +45,8 @@ int main( )
     // such that it resembles the solution of CNES.
     bounds[ 0 ][ 0 ] = 60967; // start date of mission = first node [MJD]
     bounds[ 1 ][ 0 ] = 60969;
-    bounds[ 0 ][ 1 ] = ( 61379 - bounds[ 0 ][ 0 ] ) * 86400.0; // flight duration of first leg = fifth node [s] (Earth - Earth)
-    bounds[ 1 ][ 1 ] = ( 61381 - bounds[ 0 ][ 0 ] ) * 86400.0;
+    bounds[ 0 ][ 1 ] = ( 1098 ) * 86400.0; // flight duration of first leg from CNES solution = fifth node [s] (Earth - Asteroid)
+    bounds[ 1 ][ 1 ] = ( 1100 ) * 86400.0;
 
     bounds[ 0 ][ 2 ] = bounds[ 0 ][ 0 ]; // second node [s]
     bounds[ 1 ][ 2 ] = bounds[ 1 ][ 1 ];
