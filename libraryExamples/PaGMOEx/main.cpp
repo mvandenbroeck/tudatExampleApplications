@@ -25,12 +25,20 @@
 using namespace pagmo;
 using boost::format;
 
+//??
+std::cout << "label 0" << std::endl;
+
 //! Execute main
 int main( )
 {
+    //??
+    std::cout << "label 1" << std::endl;
+
     // Set the PRNG seed, such that results are reproducable
     int seed = 123456;
     pagmo::rng_generator::set_seed( seed );
+
+
 
     // If we have archipelagos, we also set the seed there
     // arch.set_seeds(sim_id);
@@ -48,11 +56,17 @@ int main( )
     bounds[ 0 ][ 1 ] = 200;
     bounds[ 1 ][ 1 ] = 1000;
 
+    //??
+    std::cout << "label 2" << std::endl;
+
     // Define the problem
     problem::EarthMarsTransfer prob( bounds );
 
     // Create a population (8 is minimum for jDE)
     population pop( prob, 8 );
+
+    //??
+    std::cout << "label 3" << std::endl;
 
     // Select the self-adaptive differential evolution algorithm.
     // One generation per evolution step.

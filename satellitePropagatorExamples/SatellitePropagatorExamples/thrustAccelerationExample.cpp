@@ -10,6 +10,7 @@
 
 #include <Tudat/SimulationSetup/tudatSimulationHeader.h>
 #include <tudatExampleApplications/satellitePropagatorExamples/SatellitePropagatorExamples/applicationOutput.h>
+#include <tudat/Astrodynamics/ReferenceFrames/referenceFrameTransformations.h>
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -17,7 +18,8 @@
 
 //! Execute propagation of orbit of vehicle around the Earth. The vehicle is subject to a thrustforce, which is specified in
 //! the nonconstantThrust.txt file. In that file, the first column is time in seconds, the last three columns give the x, y
-//! and z components of the thrust force in the J2000 (?) frame.
+//! and z components of the thrust force in the velocity-based LVLH frame. A thrust force in the x direction corresponds to
+//! thrust in the velocity direction.
 int main()
 {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +64,7 @@ int main()
 
     // Create spacecraft object.
     bodyMap[ "Vehicle" ] = boost::make_shared< simulation_setup::Body >( );
-
+    bodyMap[ "Vehicle" ]->setConstantBodyMass( 1000.0 );
     // Finalize body creation.
     setGlobalFrameBodyEphemerides( bodyMap, "SSB", "J2000" );
 
@@ -96,7 +98,7 @@ int main()
 
 
     // Define order of Lagrange interpolator
-    int interpolatorOrder = 2;
+    int interpolatorOrder = 6;
 
     // Make interpolator
     boost::shared_ptr< interpolators::LagrangeInterpolatorSettings >
@@ -118,10 +120,14 @@ int main()
     std::map< std::string, std::vector< boost::shared_ptr< AccelerationSettings > > > accelerationsOfVehicle;
     accelerationsOfVehicle[ "Earth" ].push_back( boost::make_shared< AccelerationSettings >(
                                                      basic_astrodynamics::central_gravity ) );
+
+
     accelerationsOfVehicle[ "Vehicle" ].push_back(
-                boost::make_shared< tudat::simulation_setup::ThrustAccelerationSettings >(
+                boost::make_shared< simulation_setup::ThrustAccelerationSettings >(
                     thrustInterpolatorPointer,
-                    specificImpulseFunction ) );
+                    specificImpulseFunction,
+                    simulation_setup::ThrustFrames::lvlh_thrust_frame,
+                    "Earth" ) );
     accelerationMap[ "Vehicle" ] = accelerationsOfVehicle;
     bodiesToPropagate.push_back( "Vehicle" );
     centralBodies.push_back( "Earth" );
@@ -158,14 +164,14 @@ int main()
                 vehicleInitialStateInKeplerianElements,
                 earthGravitationalParameter );
 
+    // Create mass model that uses the thrust model to determine the mass rate.
     std::map< std::string, boost::shared_ptr< basic_astrodynamics::MassRateModel > > massRateModels;
     massRateModels[ "Vehicle" ] = (
                 createMassRateModel( "Vehicle", boost::make_shared< tudat::simulation_setup::FromThrustMassModelSettings >( 1 ),
                                      bodyMap, accelerationModelMap ) );
-    // Is the above expression specifying how the mass should be propagated?
 
     boost::shared_ptr< PropagationTimeTerminationSettings > terminationSettings =
-                    boost::make_shared< PropagationTimeTerminationSettings >( 1000.0 );
+                    boost::make_shared< PropagationTimeTerminationSettings >( 86400.0 );
     boost::shared_ptr< TranslationalStatePropagatorSettings< double > > translationalPropagatorSettings =
             boost::make_shared< TranslationalStatePropagatorSettings< double > >
             ( centralBodies, accelerationModelMap, bodiesToPropagate, systemInitialState, simulationEndEpoch );

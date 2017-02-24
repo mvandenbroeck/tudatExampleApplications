@@ -149,3 +149,9 @@ add_executable(example_library_pagmo "${SRCROOT}/main.cpp")
 setup_executable_target(example_library_pagmo "${SRCROOT}")
 target_link_libraries( example_library_pagmo  pthread pagmo  my_pagmo_problems
                       tudat_basic_astrodynamics tudat_mission_segments  ${Boost_LIBRARIES} )
+
+# Add application.
+add_executable(thesis_optimization "${SRCROOT}/thesisOptimization.cpp")
+setup_executable_target(thesis_optimization "${SRCROOT}")
+target_link_libraries( thesis_optimization  pthread pagmo  my_pagmo_problems
+                      tudat_basic_astrodynamics tudat_mission_segments  ${Boost_LIBRARIES} )
